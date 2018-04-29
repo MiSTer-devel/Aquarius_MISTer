@@ -4,6 +4,7 @@ Port of Aquarius core by Sebastien Delestaing
 
 ### Enhancements over original version:
 - Video part has been fully rewritten to provide original video and colors
+- Base CPU clock is set to 3.57MHz as per schematics.
 - Numerous fixes in tape code (did it work in original version?)
 - Fast tape loading (x16)
 - CPU turbo modes.
