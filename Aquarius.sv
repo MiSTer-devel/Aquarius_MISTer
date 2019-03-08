@@ -2,7 +2,7 @@
 //  Aquarius
 // 
 //  Enhanced version for MiSTer.
-//  Copyright (C) 2017,2018 Sorgelig
+//  Copyright (C) 2017-2019 Sorgelig
 //
 //  Original Aquarius (c) 2016 Sebastien Delestaing 
 //
@@ -50,6 +50,8 @@ module emu
 	output        VGA_HS,
 	output        VGA_VS,
 	output        VGA_DE,    // = ~(VBlank | HBlank)
+	output        VGA_F1,
+	output  [1:0] VGA_SL,
 
 	output        LED_USER,  // 1 - ON, 0 - OFF.
 
@@ -96,9 +98,29 @@ module emu
 	output        SDRAM_nCS,
 	output        SDRAM_nCAS,
 	output        SDRAM_nRAS,
-	output        SDRAM_nWE
+	output        SDRAM_nWE,
+
+	input         UART_CTS,
+	output        UART_RTS,
+	input         UART_RXD,
+	output        UART_TXD,
+	output        UART_DTR,
+	input         UART_DSR,
+
+	// Open-drain User port.
+	// 0 - D+/RX
+	// 1 - D-/TX
+	// 2..5 - USR1..USR4
+	// Set USER_OUT to 1 to read from USER_IN.
+	input   [5:0] USER_IN,
+	output  [5:0] USER_OUT,
+
+	input         OSD_STATUS
 );
 
+assign USER_OUT = '1;
+assign {UART_RTS, UART_TXD, UART_DTR} = 0;
+assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
 assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = 0;
 assign {SDRAM_DQ, SDRAM_A, SDRAM_BA, SDRAM_CLK, SDRAM_CKE, SDRAM_DQML, SDRAM_DQMH, SDRAM_nWE, SDRAM_nCAS, SDRAM_nRAS, SDRAM_nCS} = 'Z;
 assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
@@ -120,10 +142,10 @@ localparam CONF_STR =
 	"-;",
 	"F,BIN,Load Cartridge;",
 	"F,CAQ,Load Tape;",
-	"O4,Fast loading,No,Yes;",
+	"O9,Fast loading,No,Yes;",
 	"-;",
 	"O1,Aspect ratio,4:3,16:9;",
-	"O23,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%;",
+	"O24,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
 	"-;",
 	"O56,CPU Speed,Normal,x2,x4,x8;",
 	"O78,RAM expansion,16KB,32KB,None,4KB;",
@@ -131,7 +153,7 @@ localparam CONF_STR =
 	"R0,Reset;",
 	"-;",
 	"J,K1,K2,K3,K4,K5,K6;",
-	"V,v1.50.",`BUILD_DATE
+	"V,v",`BUILD_DATE
 };
 
 ////////////////////   CLOCKS   ///////////////////
@@ -149,7 +171,7 @@ reg ce_3m5;
 reg ce_1m7;
 reg ce_3k33;
 
-wire fast_tape = tape_req && status[6:4];
+wire fast_tape = tape_req && {status[9],status[6:5]};
 
 always @(negedge clk_sys) begin	
 	reg  [4:0] clk_div;
@@ -338,11 +360,18 @@ wire [9:0] vd_addr;
 
 assign CLK_VIDEO = clk_sys;
 
+wire [2:0] scale = status[4:2];
+wire [2:0] sl = scale ? scale - 1'd1 : 3'd0;
+
+assign VGA_F1 = 0;
+assign VGA_SL = sl[1:0];
+
 wire vf;
 video video
 (
 	.*,
-	.scale(status[3:2]),
+	.hq2x(scale == 1),
+	.scandoubler(|scale),
 	.video_addr(vd_addr),
 	.video_data(vd_data),
 	.video_color(vd_color)

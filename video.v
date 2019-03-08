@@ -4,8 +4,8 @@ module video
 (
 	input        clk_sys,
 	
-	input  [1:0] scale,
-	input        forced_scandoubler,
+	input        hq2x,
+	input        scandoubler,
 
 	output       CE_PIXEL,
 	output [7:0] VGA_R,
@@ -116,9 +116,9 @@ video_mixer #(320) mixer
 	.ce_pix(ce_7mn),
 	.ce_pix_out(CE_PIXEL),
 
-	.hq2x(scale == 1),
-	.scanlines({scale==3, scale==2}),
-	.scandoubler(scale || forced_scandoubler),
+	.hq2x(hq2x),
+	.scanlines(0),
+	.scandoubler(scandoubler),
 
 	.R(r),
 	.G(g),
