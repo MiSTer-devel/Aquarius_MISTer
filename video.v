@@ -55,10 +55,12 @@ always @(posedge clk_sys) begin
 	end
 
 	if(ce_7mn) begin
-		if(hc == 362) hs <= 1;
+		if(hc == 362) begin
+			hs <= 1;
+			if(vc == 225) vs <= 1;
+			if(vc == 240) vs <= 0;
+		end
 		if(hc == 395) hs <= 0;
-		if(vc == 225) vs <= 1;
-		if(vc == 240) vs <= 0;
 		if(vc == 201) vf <= 0;
 		if(vc == 244) vf <= 1;
 	end
