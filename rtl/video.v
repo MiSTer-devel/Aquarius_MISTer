@@ -15,6 +15,8 @@ module video
 	output       VGA_HS,
 	output       VGA_VS,
 
+	inout [21:0] gamma_bus,
+
 	output reg   vf,
 	output [9:0] video_addr,
 	input  [7:0] video_data,
@@ -111,16 +113,17 @@ always @(posedge clk_sys) begin
 	end
 end
 
-video_mixer #(320) mixer
+video_mixer #(320, 0, 1) mixer
 (
-	.clk_sys(clk_sys),
-	
+	.clk_vid(clk_sys),
+
 	.ce_pix(ce_7mn),
 	.ce_pix_out(CE_PIXEL),
 
 	.hq2x(hq2x),
 	.scanlines(0),
 	.scandoubler(scandoubler),
+	.gamma_bus(gamma_bus),
 
 	.R(r),
 	.G(g),

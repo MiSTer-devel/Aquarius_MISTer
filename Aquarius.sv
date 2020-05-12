@@ -210,6 +210,7 @@ wire [15:0] joystick_1;
 wire  [1:0] buttons;
 wire        forced_scandoubler;
 wire [31:0] status;
+wire [21:0] gamma_bus;
 
 wire        ioctl_wr;
 wire [24:0] ioctl_addr;
@@ -222,6 +223,8 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 	.clk_sys(clk_sys),
 	.conf_str(CONF_STR),
 	.HPS_BUS(HPS_BUS),
+	
+	.gamma_bus(gamma_bus),
 
 	.ps2_key(ps2_key),
 	.joystick_0(joystick_0),
@@ -260,11 +263,8 @@ wire cpu_iorq_n;
 T80s T80s
 (
 	.RESET_n  ( !cpu_reset ),
-	.CLK_n    ( clk_sys & ce_3m5 ),
-	.WAIT_n   ( 1          ),
-	.INT_n    ( 1          ),
-	.NMI_n    ( 1          ),
-	.BUSRQ_n  ( 1          ),
+	.CLK      ( clk_sys    ),
+	.CEN      ( ce_3m5     ),
 	.IORQ_n   ( cpu_iorq_n ),
 	.M1_n		 ( cpu_m1_n   ),
 	.MREQ_n   ( cpu_mreq_n ),
