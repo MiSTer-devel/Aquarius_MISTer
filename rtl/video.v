@@ -2,25 +2,22 @@
 
 module video
 (
-	input        clk_sys,
-	
-	input        hq2x,
-	input        scandoubler,
+	input            clk_sys,
 
-	output       CE_PIXEL,
-	output [7:0] VGA_R,
-	output [7:0] VGA_G,
-	output [7:0] VGA_B,
-	output       VGA_DE,
-	output       VGA_HS,
-	output       VGA_VS,
+	output reg       vf,
+	output     [9:0] video_addr,
+	input      [7:0] video_data,
+	input      [7:0] video_color,
 
-	inout [21:0] gamma_bus,
+	output           ce_pix,
 
-	output reg   vf,
-	output [9:0] video_addr,
-	input  [7:0] video_data,
-	input  [7:0] video_color
+	output reg [7:0] R,
+	output reg [7:0] G,
+	output reg [7:0] B,
+	output reg       HBlank,
+	output reg       VBlank,
+	output reg       HSync,
+	output reg       VSync
 );
 
 reg ce_7mp, ce_7mn;
@@ -58,21 +55,18 @@ always @(posedge clk_sys) begin
 
 	if(ce_7mn) begin
 		if(hc == 362) begin
-			hs <= 1;
-			if(vc == 225) vs <= 1;
-			if(vc == 240) vs <= 0;
+			HSync <= 1;
+			if(vc == 225) VSync <= 1;
+			if(vc == 240) VSync <= 0;
 		end
-		if(hc == 395) hs <= 0;
-		if(vc == 201) vf <= 0;
-		if(vc == 244) vf <= 1;
+		if(hc == 395) HSync <= 0;
+		if(vc == 201) vf    <= 0;
+		if(vc == 244) vf    <= 1;
 	end
 end
 
 reg  [7:0] vdata;
-reg        vblank;
-reg        hblank;
 wire [3:0] color = vdata[7] ? video_color[7:4] : video_color[3:0];
-reg  [7:0] r,g,b;
 
 always @(posedge clk_sys) begin
 	reg vbl;
@@ -90,58 +84,29 @@ always @(posedge clk_sys) begin
 	end
 
 	if(ce_7mp) begin
-		hblank <= hbl;
-		vblank <= vbl;
+		HBlank <= hbl;
+		VBlank <= vbl;
 		case(color)
-			'b0000: {r,g,b} <= {8'd0,   8'd0,   8'd0   };
-			'b0001: {r,g,b} <= {8'd196, 8'd0,   8'd27  };
-			'b0010: {r,g,b} <= {8'd7,   8'd191, 8'd0   };
-			'b0011: {r,g,b} <= {8'd201, 8'd185, 8'd8   };
-			'b0100: {r,g,b} <= {8'd0,   8'd6,   8'd183 };
-			'b0101: {r,g,b} <= {8'd184, 8'd0,   8'd210 };
-			'b0110: {r,g,b} <= {8'd0,   8'd199, 8'd164 };
-			'b0111: {r,g,b} <= {8'd255, 8'd255, 8'd255 };
-			'b1000: {r,g,b} <= {8'd191, 8'd191, 8'd191 };
-			'b1001: {r,g,b} <= {8'd65,  8'd166, 8'd149 };
-			'b1010: {r,g,b} <= {8'd131, 8'd40,  8'd144 };
-			'b1011: {r,g,b} <= {8'd6,   8'd14,  8'd105 };
-			'b1100: {r,g,b} <= {8'd186, 8'd178, 8'd86  };
-			'b1101: {r,g,b} <= {8'd60,  8'd152, 8'd47  };
-			'b1110: {r,g,b} <= {8'd127, 8'd25,  8'd42  };
-			'b1111: {r,g,b} <= {8'd0,   8'd0,   8'd0   };
+			'b0000: {R,G,B} <= {8'd0,   8'd0,   8'd0   };
+			'b0001: {R,G,B} <= {8'd196, 8'd0,   8'd27  };
+			'b0010: {R,G,B} <= {8'd7,   8'd191, 8'd0   };
+			'b0011: {R,G,B} <= {8'd201, 8'd185, 8'd8   };
+			'b0100: {R,G,B} <= {8'd0,   8'd6,   8'd183 };
+			'b0101: {R,G,B} <= {8'd184, 8'd0,   8'd210 };
+			'b0110: {R,G,B} <= {8'd0,   8'd199, 8'd164 };
+			'b0111: {R,G,B} <= {8'd255, 8'd255, 8'd255 };
+			'b1000: {R,G,B} <= {8'd191, 8'd191, 8'd191 };
+			'b1001: {R,G,B} <= {8'd65,  8'd166, 8'd149 };
+			'b1010: {R,G,B} <= {8'd131, 8'd40,  8'd144 };
+			'b1011: {R,G,B} <= {8'd6,   8'd14,  8'd105 };
+			'b1100: {R,G,B} <= {8'd186, 8'd178, 8'd86  };
+			'b1101: {R,G,B} <= {8'd60,  8'd152, 8'd47  };
+			'b1110: {R,G,B} <= {8'd127, 8'd25,  8'd42  };
+			'b1111: {R,G,B} <= {8'd0,   8'd0,   8'd0   };
 		endcase
 	end
 end
 
-video_mixer #(320, 0, 1) mixer
-(
-	.clk_vid(clk_sys),
-
-	.ce_pix(ce_7mn),
-	.ce_pix_out(CE_PIXEL),
-
-	.hq2x(hq2x),
-	.scanlines(0),
-	.scandoubler(scandoubler),
-	.gamma_bus(gamma_bus),
-
-	.R(r),
-	.G(g),
-	.B(b),
-
-	.mono(0),
-
-	.HSync(hs),
-	.VSync(vs),
-	.HBlank(hblank),
-	.VBlank(vblank),
-
-	.VGA_R(VGA_R),
-	.VGA_G(VGA_G),
-	.VGA_B(VGA_B),
-	.VGA_VS(VGA_VS),
-	.VGA_HS(VGA_HS),
-	.VGA_DE(VGA_DE)
-);
+assign ce_pix = ce_7mn;
 
 endmodule
