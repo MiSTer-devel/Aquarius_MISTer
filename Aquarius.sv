@@ -498,8 +498,8 @@ assign AUDIO_R = {audio_data, 6'd0};
 
 wire [7:0] pad0, pad1;
 
-pad pad_0(.joy_in(joystick_0[9:0]), .pad_out(pad0 | kbd_pad0));
-pad pad_1(.joy_in(joystick_1[9:0]), .pad_out(pad1 | kbd_pad1));
+pad pad_0(.joy_in(joystick_0[9:0] | kbd_pad0), .pad_out(pad0));
+pad pad_1(.joy_in(joystick_1[9:0] | kbd_pad1), .pad_out(pad1));
 
 // include keyboard decoder
 wire [7:0] key_value; // Pla1 <-> PS2_to_matrix
